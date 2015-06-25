@@ -4,7 +4,7 @@ Sequential programming for node.js, end of callback hell.
 
 Simple, straightforward abstraction over [Fibers](https://github.com/laverdet/node-fibers).
 
-By using **wait.for**, you can call any nodejs standard async function in sequential/Sync mode, waiting for result data, 
+By using **wait.for**, you can call any nodejs standard async function in sequential/Sync mode, waiting for result data,
 without blocking node's event loop (thanks to fibers)
 
 A nodejs standard async function is a function in which the last parameter is a callback: function(err,data)
@@ -24,12 +24,12 @@ Advantages:
 ###Aug-2013 - Wait.for-ES6 based on ES6-generators
 
 I've developed ***a version based on JavaScript upcoming ES6-Harmony generators***. It's not based on node-fibers.
-***Surprisingly***, ES6 based implementation of *wait.for(asyncFn)* is almost a no-op, you can even completely omit it. *Warning: Bleeding edge*. Check [Wait.for-ES6] (https://github.com/luciotato/waitfor-ES6) 
+***Surprisingly***, ES6 based implementation of *wait.for(asyncFn)* is almost a no-op, you can even completely omit it. *Warning: Bleeding edge*. Check [Wait.for-ES6] (https://github.com/luciotato/waitfor-ES6)
 
 ---------------
 
 
-Install: 
+Install:
 ----
         npm install wait.for
 
@@ -47,7 +47,7 @@ var server = http.createServer(
   }).listen(8000);
 ```
 
-then,at *function handler(req,res)* and every function you call from there, 
+then,at *function handler(req,res)* and every function you call from there,
 you'll be able to use wait.for(ayncFn...
 
 Minimal running example
@@ -93,7 +93,7 @@ app.listen(3000);
 
 ```
 
-Generic Usage: 
+Generic Usage:
 ------------
 ```javascript
 var wait=require('wait.for');
@@ -104,7 +104,7 @@ wait.launchFiber(my_sequential_function, arg,arg,...)
 // in a fiber.. We can wait for async functions
 function my_sequential_function(arg,arg...){
     // call async_function(arg1), wait for result, return data
-    var myObj = wait.for(async_function, arg1); 
+    var myObj = wait.for(async_function, arg1);
     // call myObj.querydata(arg1,arg2), wait for result, return data
     var myObjData = wait.forMethod(myObj,'queryData', arg1, arg2);
     console.log(myObjData.toString());
@@ -114,25 +114,25 @@ function my_sequential_function(arg,arg...){
 -------------
 ##Notes on non-standard callbacks. e.g.: connection.query from mysql
 
-wait.for expects standardized callbacks. 
+wait.for expects standardized callbacks.
 A standardized callback always returns (err,data) in that order.
 
-A solution for the sql.query method and other non-standard callbacks 
+A solution for the sql.query method and other non-standard callbacks
 is to create a wrapper function standardizing the callback, e.g.:
 
-     connection.prototype.q = function(sql, params, stdCallback){ 
-                 this.query(sql,params, function(err,rows,columns){ 
-                                     return stdCallback(err,{rows:rows,columns:columns}); 
+     connection.prototype.q = function(sql, params, stdCallback){
+                 this.query(sql,params, function(err,rows,columns){
+                                     return stdCallback(err,{rows:rows,columns:columns});
                              });
      }
 
 usage:
 
     try {
-      var result = wait.forMethod(connection, "q", options.sql, options.params); 
+      var result = wait.forMethod(connection, "q", options.sql, options.params);
       console.log(result.rows);
       console.log(result.columns);
-    } 
+    }
     catch(err) {
        console.log(err);
     }
@@ -143,8 +143,8 @@ More Examples:
 DNS testing, *using pure node.js* (a little of callback hell):
 ```javascript
 var dns = require("dns");
-    
-function test(){ 
+
+function test(){
 	dns.resolve4("google.com", function(err, addresses) {
 		if (err) throw err;
 		for (var i = 0; i < addresses.length; i++) {
@@ -172,8 +172,10 @@ function test(){
 	}
 }
 
-wait.launchFiber(test); 
+wait.launchFiber(test);
 ```
+Cradle/couchdb Usage Example - see 
+- [cradle example](/examples/waitfor-cradle.js)
 
 Database example (pseudocode)
 --
@@ -205,8 +207,8 @@ function handleWithdrawal(req,res){
 	}
 }
 ```
-Note: The above code, although it looks like it will catch the exceptions, **it will not**. 
-Catching exceptions with callback hell adds a lot of pain, and i'm not sure if you will have the 'res' parameter 
+Note: The above code, although it looks like it will catch the exceptions, **it will not**.
+Catching exceptions with callback hell adds a lot of pain, and i'm not sure if you will have the 'res' parameter
 to respond to the user. If somebody like to fix this example... be my guest.
 
 
@@ -246,15 +248,15 @@ Parallel Extensions
 
 -------------
 ###wait.parallel.launch(functions:Array)
-     
+
 Note: must be in a Fiber
 
-####input: 
+####input:
 * functions: Array = [[func,arg,arg],[func,arg,arg],...]
 
 wait.parallel.launch expects an array of [[func,arg,arg..],[func,arg,arg..],...] and then launches a fiber for each function call, in parallel, and waits for all the fibers to complete.
 
-The functions to be called ***should not be async functions***. 
+The functions to be called ***should not be async functions***.
 
 Each called sync function will be executed in it's own fiber, and this sync function should/can use `data=wait.for(..)` internally in order to call async functions.
 
@@ -270,15 +272,15 @@ Each called sync function will be executed in it's own fiber, and this sync func
 
 -------------
 ###wait.parallel.map(arr:Array, mappedFn:function)
-     
+
 Note: must be in a Fiber
 
-####input: 
+####input:
 - arr: Array
-- mappedFn = function(item,index,arr) 
+- mappedFn = function(item,index,arr)
 -- mappedFn should return converted item. Since we're in a fiber
 -- mappedFn can use wait.for and also throw/try/catch
-        
+
 ####returns:
 - array with converted items
 - do not "returns" until all fibers complete
@@ -289,19 +291,19 @@ Note: must be in a Fiber
 
 Note: must be in a Fiber
 
-####input: 
+####input:
 - arr: Array
-- itemTestFn = function(item,index,arr) 
+- itemTestFn = function(item,index,arr)
 -- itemTestFn should return true|false. Since we're in a fiber
 -- itemTestFn can use wait.for and also throw/try/catch
 
-####returns 
+####returns
 - array with items where itemTestFn() returned true
 - do not "returns" until all fibers complete
 - throws if error
 
 
 -------------
-Parallel Usage Example: 
-see: 
+Parallel Usage Example:
+see:
 - [parallel-tests](/parallel-tests.js)
